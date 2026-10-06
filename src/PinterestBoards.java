@@ -65,8 +65,8 @@ public class PinterestBoards {
     }
 
     public static String webToString(URL url) {
-        try (InputStream input = url.openStream()) {
-            return new String(input.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        try {
+            return new String(readUrl(url), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             return "";
@@ -109,24 +109,21 @@ public class PinterestBoards {
         }
         return sb.toString();
     }
-    public static byte[] getImgFromLink(String link){
+    static byte[] readUrl(URL url) throws IOException {
+        java.net.URLConnection connection = url.openConnection();
+        connection.setConnectTimeout(15_000);
+        connection.setReadTimeout(15_000);
+        try (InputStream input = connection.getInputStream()) {
+            return input.readAllBytes();
+        }
+    }
+
+    public static byte[] getImgFromLink(String link) {
         try {
-            URL url = new URL(link);
-            InputStream in = new BufferedInputStream(url.openStream());
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buf = new byte[1024];
-            int n = 0;
-            while (-1 != (n = in.read(buf))) {
-                out.write(buf, 0, n);
-            }
-            out.close();
-            in.close();
-            return  out.toByteArray();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+            return readUrl(new URL(link));
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 }
