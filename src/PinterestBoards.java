@@ -26,22 +26,15 @@ public class PinterestBoards {
             String web = webToString(carteles);
             ArrayList<String> originals = getElementPos(web, "originals");
             originals.forEach(v ->{
-                String name = getImgName(v);
-                String extension = getImgExtension(v);
-                System.out.println(name+extension);
                 byte[] img = getImgFromLink(v);
-                if (img!=null){
+                if (img != null) {
                     try {
-                        FileOutputStream fos = new FileOutputStream(savePath+"\\"+name+extension);
-                        fos.write(img);
-                        fos.close();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
+                        saveImage(savePath, v, img);
+                    } catch (IOException | IllegalArgumentException e) {
                         e.printStackTrace();
                     }
-
                 }
+
             });
 
 
@@ -52,29 +45,23 @@ public class PinterestBoards {
         }
     }
 
-    private static String getImgExtension(String link) {
-        StringBuilder sb = new StringBuilder();
-        int cont =0;
-        for (int i = link.length()-1; i >=0 ; i--) {
-            char c = link.charAt(i);
-            if (c=='.'){ return  sb.reverse().toString();}
-            sb.append(c);
-
+    static String imageFileName(String link) {
+        String path = java.net.URI.create(link).getPath();
+        if (path == null) {
+            throw new IllegalArgumentException("Image URL has no path");
         }
-        return null;
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        if (name.isBlank() || name.equals(".") || name.equals("..") || name.contains("\\")) {
+            throw new IllegalArgumentException("Image URL has no valid file name");
+        }
+        return name.replaceAll("[:*?\"<>|\\p{Cntrl}]", "_");
     }
 
-    private static String getImgName(String link) {
-        StringBuilder sb = new StringBuilder();
-        int cont =0;
-        for (int i = link.length()-1; i >=0 ; i--) {
-            char c = link.charAt(i);
-            if (c=='/'){ return  sb.reverse().toString();}
-            if (c=='.'){cont++;}
-            if (cont==1){ sb.append(c);}
-
-        }
-        return null;
+    static void saveImage(String savePath, String link, byte[] image) throws IOException {
+        java.nio.file.Path directory = java.nio.file.Path.of(savePath);
+        String name = imageFileName(link);
+        java.nio.file.Files.createDirectories(directory);
+        java.nio.file.Files.write(directory.resolve(name), image);
     }
 
     public static String webToString(URL url) {
