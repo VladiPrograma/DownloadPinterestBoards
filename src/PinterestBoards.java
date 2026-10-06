@@ -77,28 +77,13 @@ public class PinterestBoards {
         return null;
     }
 
-    public static String webToString(URL url){
-        //Instantiating the URL class
-        try {
-            //Retrieving the contents of the specified page
-            Scanner sc = new Scanner(url.openStream());
-            //Instantiating the StringBuffer class to hold the result
-            StringBuffer sb = new StringBuffer();
-            while(sc.hasNext()) {
-                sb.append(sc.next());
-                //System.out.println(sc.next());
-            }
-            //Retrieving the String from the String Buffer object
-            String result = sb.toString();
-            //Removing the HTML tags
-            result = result.replaceAll("<[^>]*>", "");
-            return result;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+    public static String webToString(URL url) {
+        try (InputStream input = url.openStream()) {
+            return new String(input.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
+            return "";
         }
-        return "";
     }
     public static ArrayList<String> getElementPos(String web, String pattern) {
         java.util.Set<String> images = new java.util.LinkedHashSet<>();
