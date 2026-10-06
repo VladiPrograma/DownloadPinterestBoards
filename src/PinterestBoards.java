@@ -100,43 +100,34 @@ public class PinterestBoards {
         }
         return "";
     }
-    public static ArrayList<String> getElementPos(String web, String pattern){
-        ArrayList<String> list = new ArrayList<>();
-        char[] w = web.toLowerCase().toCharArray();
-        char[] p = pattern.toCharArray();
-        int cont=0;
-
-        for (int i = 0; i < w.length; i++) {
-
-            if (p[cont]==w[i]){
-                cont++;
-            }else {
-                cont=0;
-            }
-
-            if (cont==p.length){
-                int pos =i-cont+1;
-                char c=web.charAt(pos);
-                while (c != '"'){
-                 pos--;
-                 c=web.charAt(pos);
-                }
-                pos++;
-                c = web.charAt(pos);
-                StringBuilder sb = new StringBuilder();
-                while (c!='"'){
-                    sb.append(c);
-                    pos++;
-                    c = web.charAt(pos);
-                }
-                if (sb.toString().contains("originals")&&sb.toString().contains("pinimg")){
-                    list.add(sb.toString());
-                }
-                cont=0;
-            }
-
+    public static ArrayList<String> getElementPos(String web, String pattern) {
+        java.util.Set<String> images = new java.util.LinkedHashSet<>();
+        if (web == null || pattern == null || pattern.isEmpty()) {
+            return new ArrayList<>();
         }
-        return list;
+        String normalized = web.replace("\\/", "/");
+        java.util.regex.Matcher values = java.util.regex.Pattern
+                .compile("[\"']([^\"'<>]*)[\"']").matcher(normalized);
+        while (values.find()) {
+            String value = values.group(1).replace("&amp;", "&");
+            if (!value.toLowerCase(java.util.Locale.ROOT)
+                    .contains(pattern.toLowerCase(java.util.Locale.ROOT))) {
+                continue;
+            }
+            try {
+                java.net.URI uri = java.net.URI.create(value);
+                String host = uri.getHost();
+                if (("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                        && host != null && (host.equalsIgnoreCase("pinimg.com")
+                        || host.toLowerCase(java.util.Locale.ROOT).endsWith(".pinimg.com"))
+                        && uri.getPath() != null && uri.getPath().startsWith("/originals/")) {
+                    images.add(value);
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Quoted HTML attributes and JSON keys are not necessarily URLs.
+            }
+        }
+        return new ArrayList<>(images);
     }
     public static String getElement(String web, int pos){
         StringBuilder sb = new StringBuilder();
